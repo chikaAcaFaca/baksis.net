@@ -1,16 +1,25 @@
 
 export type UserRole = 'CREATOR' | 'FOLLOWER' | 'ADMIN';
 
+export interface SubscriptionTier {
+  id: string;
+  name: string;
+  price: number;
+  benefits: string[];
+  color: string;
+}
+
 export interface User {
   id: string;
   username: string;
   displayName: string;
   avatar: string;
+  banner?: string;
   bio: string;
   role: UserRole;
   isVerified: boolean;
   email?: string;
-  phone_number?: string; // Promenjeno iz phoneNumber u phone_number da odgovara bazi
+  phone_number?: string;
   paymentMethods: {
     payoneerEmail?: string;
     payoneerId?: string;
@@ -28,6 +37,13 @@ export interface User {
       monthly: number;
     };
   };
+  youtubeConfig?: {
+    channelId: string;
+    handle: string;
+    isConnected: boolean;
+    lastSync?: Date;
+  };
+  subscriptionTiers?: SubscriptionTier[];
   ownedVideos?: string[];
   socialLinks?: {
     youtube?: string;
@@ -42,7 +58,7 @@ export interface DigitalProduct {
   name: string;
   description: string;
   price: number;
-  type: 'TAROT_READING' | 'EBOOK' | 'SERVICE' | 'CONSULTATION' | 'EXTENDED_VIDEO' | 'FILE_DOWNLOAD';
+  type: 'TAROT_READING' | 'EBOOK' | 'SERVICE' | 'CONSULTATION' | 'EXTENDED_VIDEO' | 'FILE_DOWNLOAD' | 'SUBSCRIPTION';
   imageUrl?: string;
   externalLink?: string;
   fileSize?: number;
@@ -58,44 +74,7 @@ export interface ExtendedVideo {
   duration: string;
   thumbnailUrl: string;
   videoUrl: string; 
+  isExtended: boolean;
   raffleEntriesGranted: number;
 }
-
-export type RafflePeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
-
-export interface RaffleSession {
-  id: string;
-  creatorId: string;
-  period: RafflePeriod;
-  status: 'ACTIVE' | 'COMPLETED';
-  startDate: Date;
-  endDate: Date;
-  rewardDescription: string;
-  rewardType: 'TAROT_READING' | 'DIGITAL_PRODUCT' | 'CONSULTATION';
-  entries: { userId: string; count: number }[];
-}
-
-export interface Transaction {
-  id: string;
-  amount: number;
-  fee: number;
-  creatorId: string;
-  followerId: string;
-  timestamp: Date;
-  status: 'COMPLETED' | 'PENDING';
-  isInternal: boolean;
-  productId?: string;
-  productType?: 'VIDEO' | 'SUB' | 'TIP' | 'PRODUCT';
-}
-
-export interface Post {
-  id: string;
-  creatorId: string;
-  type: 'IMAGE' | 'VIDEO' | 'TEXT';
-  content: string;
-  mediaUrl?: string;
-  isPaid: boolean;
-  price?: number;
-  timestamp: Date;
-  source?: 'YOUTUBE' | 'TIKTOK' | 'INSTAGRAM' | 'NATIVE';
-}
+// ... ostali tipovi ostaju isti

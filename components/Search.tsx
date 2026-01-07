@@ -26,7 +26,7 @@ export const Search: React.FC = () => {
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
         <div className="max-w-4xl mx-auto text-center relative z-10 space-y-8">
            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none">
-             PRONAĐI SVOJU<br/><span className="text-indigo-500">INSPIRACIJU.</span>
+             PRONAĐI SVOJU<br/><span className="text-indigo-50">INSPIRACIJU.</span>
            </h1>
            
            <div className="relative group max-w-2xl mx-auto">
@@ -36,7 +36,7 @@ export const Search: React.FC = () => {
               placeholder="Pretraži po imenu ili veštini..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border-none rounded-[2rem] px-8 py-6 text-sm font-bold shadow-2xl focus:ring-0 relative z-10"
+              className="w-full bg-white border-none rounded-[2rem] px-8 py-6 text-sm font-bold shadow-2xl focus:ring-0 relative z-10 text-gray-900 placeholder:text-gray-300"
              />
              <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20 text-indigo-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -91,8 +91,8 @@ export const Search: React.FC = () => {
                     <div className="text-sm font-black text-gray-900">{creator.stats.followersCount.toLocaleString()}</div>
                  </div>
                  <div className="flex-1 bg-gray-50 rounded-2xl py-3 border border-gray-100">
-                    <div className="text-[10px] font-black uppercase text-gray-400 mb-0.5 tracking-widest">Digital Goods</div>
-                    <div className="text-sm font-black text-indigo-600">24</div>
+                    <div className="text-[10px] font-black uppercase text-gray-400 mb-0.5 tracking-widest">Usluge</div>
+                    <div className="text-sm font-black text-indigo-600">5</div>
                  </div>
               </div>
             </Link>

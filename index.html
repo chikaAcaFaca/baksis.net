@@ -8,6 +8,10 @@
     <meta name="description" content="Prva balkanska platforma gde kreatori zadržavaju 95% zarade. Isplate na Payoneer bez suvišnih provizija.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+        // Osigurava da process.env ne puca ako build alat (Vite) ne ubaci vrednosti na vreme
+        window.process = window.process || { env: {} };
+    </script>
     <style>
         body { 
           font-family: 'Inter', sans-serif; 

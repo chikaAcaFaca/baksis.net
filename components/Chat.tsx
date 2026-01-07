@@ -77,7 +77,7 @@ export const Chat: React.FC = () => {
              <input 
               type="text" 
               placeholder="Pretraži četove..." 
-              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-300" 
+              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-300 text-gray-900" 
              />
           </div>
         </div>
@@ -179,7 +179,7 @@ export const Chat: React.FC = () => {
                     }
                   }}
                   placeholder="Napiši poruku..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium py-3 px-2 resize-none max-h-32 scrollbar-hide"
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium py-3 px-2 resize-none max-h-32 scrollbar-hide text-gray-900"
                 />
                 <button 
                   onClick={handleSendMessage}
