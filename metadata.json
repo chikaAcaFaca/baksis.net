@@ -1,0 +1,8 @@
+{
+  "name": "bakšis.net",
+  "description": "Premium balkan creator platform. 95% creator share. Payoneer integrated.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
