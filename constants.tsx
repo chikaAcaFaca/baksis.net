@@ -19,21 +19,21 @@ export const DEFAULT_TIERS: SubscriptionTier[] = [
     name: 'Early Bird', 
     price: 4.99, 
     color: 'indigo', 
-    benefits: ['Gledaj videe 3 dana ranije', 'App & Mail obaveštenja', 'Značka prvog gledaoca'] 
+    benefits: ['Gledaj videe 3 dana ranije', 'Direktna obaveštenja', 'Značka prvog gledaoca'] 
   },
   { 
     id: 'tier-premium', 
     name: 'Premium Member', 
     price: 19.99, 
     color: 'emerald', 
-    benefits: ['Uključuje Early Bird status', 'Svi PRODUŽENI videi (Arhiva)', 'Svi novi videi sledećih 30 dana', 'Pristup Premium četu'] 
+    benefits: ['Svi PRODUŽENI videi (Arhiva)', 'Uključuje Early Bird status', 'Pristup Premium četu', 'Bez reklama'] 
   },
   { 
     id: 'tier-plus', 
     name: 'Premium Plus', 
     price: 29.99, 
     color: 'amber', 
-    benefits: ['Sve iz Premium paketa', 'Prioritetni odgovor (u roku od 2h)', 'Učešće u mesečnoj Tarot Tomboli', 'Popust na privatne sesije'] 
+    benefits: ['Sve iz Premium paketa', 'Prioritetni odgovor (2h)', 'Mesečna Tarot Tombola', 'Popust na privatne sesije'] 
   }
 ];
 
@@ -71,27 +71,26 @@ export const EXALTED_VENUS: User = {
 };
 
 export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
-  // Specijalni extended videi - Price Ladder Bridge
   { 
     id: 'v-extended-1', 
-    name: 'LJUBAVNI ŽIVOT: Šta krije njihova podsvest?', 
-    description: '1 PRODUŽENI VIDEO + 30 dana Early Bird statusa. Saznajte istinu koju vam ne govore.', 
+    name: 'LJUBAVNI ŽIVOT: Duboka Analiza', 
+    description: 'PRODUŽENI VIDEO + 30 dana Early Bird statusa. Analiza namera vaše osobe koju ne smem na YT.', 
     price: 9.99, 
     type: 'EXTENDED_VIDEO', 
     imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=800&q=80' 
   },
   { 
     id: 'v-extended-2', 
-    name: 'FINANSIJE 2025: Veliki godišnji vodič', 
-    description: '1 PRODUŽENI VIDEO + 30 dana Early Bird statusa. Fokus na investicije i promenu karijere.', 
+    name: 'FINANSIJE: Godišnji Plan', 
+    description: 'PRODUŽENI VIDEO + 30 dana Early Bird statusa. Fokus na investicije i promenu karijere.', 
     price: 9.99, 
     type: 'EXTENDED_VIDEO', 
     imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80' 
   },
   { 
     id: 'p-natal-annual', 
-    name: 'Natalna Karta + Horoskop', 
-    description: 'Kompletno tumačenje (45 min WhatsApp video poziv). Prognoze za 12 meseci.', 
+    name: 'Natalna Karta (Full Paket)', 
+    description: '45 min WhatsApp video poziv + PDF izveštaj. Sveobuhvatna analiza sudbine.', 
     price: 120.00, 
     type: 'CONSULTATION', 
     imageUrl: 'https://images.unsplash.com/photo-1515940175183-6798529cb860?w=400&q=80' 
@@ -99,16 +98,11 @@ export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
   { 
     id: 'p-tarot-session', 
     name: 'Tarot Tumačenje Uživo', 
-    description: 'Video poziv uživo. Gledate otvaranje karata i razgovaramo na vašu temu.', 
+    description: 'Video poziv uživo. Gledate svako otvaranje karata i dobijate odgovore odmah.', 
     price: 65.00, 
     type: 'TAROT_READING', 
     imageUrl: 'https://images.unsplash.com/photo-1576669801775-ffed63192b48?w=400&q=80' 
   },
-];
-
-export const MOCK_TRANSACTIONS = [
-  { id: 'tx-1', amount: 120.00, fee: 6.00, date: new Date(), creatorId: 'exalted-venus-001' },
-  { id: 'tx-2', amount: 9.99, fee: 0.50, date: new Date(), creatorId: 'exalted-venus-001' },
 ];
 
 export const MOCK_FOLLOWERS: User[] = [{ id: 'user-101', username: 'marko', displayName: 'Marko J.', avatar: 'https://i.pravatar.cc/150?u=marko', bio: "Pratilac", role: 'FOLLOWER', isVerified: false, paymentMethods: { isVerified: false }, stats: { followersCount: 0, followingCount: 1, storageUsed: 0, maxStorage: 5120, growthMinutesUsed: 0, growthMinutesTotal: 0 } }];
@@ -116,3 +110,12 @@ export const MOCK_FOLLOWER = MOCK_FOLLOWERS[0];
 export const ALL_USERS = [EXALTED_VENUS, ...MOCK_FOLLOWERS];
 export const MOCK_CREATORS = [EXALTED_VENUS];
 export const CATEGORIES = [{ id: 'astro', name: 'Astrologija & Tarot', icon: '🔮' }];
+
+// MOCK TRANSACTIONS for Admin Dashboard
+export const MOCK_TRANSACTIONS = [
+  { id: 'tx-1', amount: 120.00, fee: 6.00, creator: 'exalted-venus', date: '2024-05-20' },
+  { id: 'tx-2', amount: 45.00, fee: 2.25, creator: 'exalted-venus', date: '2024-05-21' },
+  { id: 'tx-3', amount: 9.99, fee: 0.50, creator: 'exalted-venus', date: '2024-05-21' },
+  { id: 'tx-4', amount: 65.00, fee: 3.25, creator: 'exalted-venus', date: '2024-05-22' },
+  { id: 'tx-5', amount: 19.99, fee: 1.00, creator: 'exalted-venus', date: '2024-05-23' }
+];
