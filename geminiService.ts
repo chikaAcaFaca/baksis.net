@@ -12,11 +12,12 @@ export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: s
       
       ZADATAK: Predloži 3 viralna segmenta (klipa). Za svaki klip generiši:
       1. Tačno vreme početka i kraja (npr. "01:20" do "02:10").
-      2. Viralni 'Hook' (titlovana rečenica koja ide na početak).
-      3. Kompletne 'Captions' (titlove) za ceo klip.
-      4. Optimizovan opis za TikTok, Instagram i X.
+      2. Viralni 'Hook' (rečenica koja se pojavljuje na ekranu u prve 3 sekunde).
+      3. Kompletne 'Captions' (titlove) za ceo trajanje klipa, formatirane za lako čitanje.
+      4. Predlog najboljeg formata (9:16 ili 16:9) i rezolucije (720p/1080p).
+      5. Optimizovan opis za TikTok, Instagram i X.
       
-      Fokusiraj se na 'Portrait' format (9:16) kao primarni za Shorts/Reels.`,
+      OSIGURAJ da titlovi budu privlačni i prilagođeni balkanskom slengu ako je prikladno.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -51,12 +52,13 @@ export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: s
       }
     });
 
-    const parsed = JSON.parse(response.text || '{"suggestions":[]}');
-    // Default vrednosti za format i rezoluciju
+    const text = response.text || '{"suggestions":[]}';
+    const parsed = JSON.parse(text);
+    
     return parsed.suggestions.map((s: any) => ({
       ...s,
-      selectedRatio: '9:16',
-      selectedRes: '1080p'
+      selectedRatio: s.selectedRatio || '9:16',
+      selectedRes: s.selectedRes || '1080p'
     }));
   } catch (error) {
     console.error("AI Clipping Error:", error);
@@ -68,13 +70,13 @@ export const getSalesExpertAdvice = async (userMessage: string, isRegistered: bo
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const systemPrompt = isRegistered 
-    ? `Ti si Baksica, vrhunski Sales Expert za bakšis.net. Korisnik JE REGISTROVAN. 
-       PRODAJ MU: Growth Boost za samo 4.99$. Objasni da za tu cenu dobija 100 MINUTA AI video clippinga.
-       Poređenje: Drugi alati koštaju po 20-30$, mi mu dajemo sve za 5$ uz čuvanje 95% zarade.
-       Budi profesionalna, ali i "drugarica" koja mu štedi pare.`
+    ? `Ti si Baksica, Sales Expert za bakšis.net. Korisnik JE REGISTROVAN. 
+       FOKUS: Prodaj 'Growth Boost' ($4.99/100 min).
+       Objasni da sa 100 minuta mogu pokriti ceo mesec sadržaja na 3 mreže.
+       Budi podrška, profesionalna i malo "bossy" oko njihovog vremena.`
     : `Ti si Baksica, Sales Expert. Korisnik NIJE REGISTROVAN. 
-       Cilj: Prodaj mu ideju bakšis.net-a. Fokusiraj se na to da OnlyFans uzima 20%, a mi 5%. 
-       Nagovesti mu 'Social Orbit' alat koji mu omogućava da 100 minuta videa pretvori u stotine Shortsa za samo 4.99$.`;
+       FOKUS: Zašto OnlyFans nije za njih (uzimaju im previše).
+       Pomeni 'Social Orbit' alat koji pretvara YouTube u novac.`;
 
   try {
     const response = await ai.models.generateContent({

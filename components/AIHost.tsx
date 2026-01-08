@@ -112,7 +112,6 @@ export const AIHost: React.FC = () => {
       setIsActive(true);
       setShowInvitation(false);
       
-      // Inicijalizacija klijenta koristeći isključivo process.env.API_KEY.
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -135,7 +134,6 @@ export const AIHost: React.FC = () => {
               }
               const pcmBase64 = encode(new Uint8Array(int16.buffer));
               
-              // Slanje audio podataka čim sesija bude spremna.
               sessionPromise.then(session => {
                 session.sendRealtimeInput({
                   media: { data: pcmBase64, mimeType: 'audio/pcm;rate=16000' }
@@ -149,7 +147,6 @@ export const AIHost: React.FC = () => {
             if (!audioCtxRef.current) return;
             const currentOutputCtx = audioCtxRef.current.output;
             
-            // Rukovanje prekidom (interruption) od strane modela.
             if (message.serverContent?.interrupted) {
               audioSourcesRef.current.forEach(s => { try { s.stop(); } catch (e) {} });
               audioSourcesRef.current.clear();
@@ -158,11 +155,13 @@ export const AIHost: React.FC = () => {
               return;
             }
 
-            const base64EncodedAudioString = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            // Fix: Added null/undefined checks for modelTurn parts
+            const parts = message.serverContent?.modelTurn?.parts;
+            const base64EncodedAudioString = parts && parts.length > 0 ? parts[0].inlineData?.data : undefined;
+            
             if (base64EncodedAudioString) {
               setIsAiSpeaking(true);
               
-              // Sinhronizacija početka emitovanja sledećeg audio segmenta.
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, currentOutputCtx.currentTime);
               const buffer = await decodeAudioData(decode(base64EncodedAudioString), currentOutputCtx, 24000, 1);
               const source = currentOutputCtx.createBufferSource();
