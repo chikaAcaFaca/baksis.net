@@ -5,6 +5,8 @@ export const APP_FEE_PERCENTAGE = 5;
 export const OPERATOR_NAME = "nknet consulting doo";
 export const MAX_FILE_SIZE_MB = 50;
 export const MAX_STORAGE_PER_CREATOR_MB = 5120;
+export const AI_COST_PER_MINUTE = 0.0015; // Trošak u dolarima
+export const GROWTH_BOOST_MINUTES_LIMIT = 100;
 
 export const slugify = (text: string) => {
   return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[čć]/g, 'c').replace(/[š]/g, 's').replace(/[ž]/g, 'z').replace(/[đ]/g, 'dj').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
@@ -27,7 +29,15 @@ export const EXALTED_VENUS: User = {
   isVerified: true,
   isInternalProject: true,
   paymentMethods: { payoneerEmail: 'jecaman86@gmail.com', isVerified: true },
-  stats: { followersCount: 15600, followingCount: 12, balance: 1240.50, storageUsed: 1200, maxStorage: MAX_STORAGE_PER_CREATOR_MB },
+  stats: { 
+    followersCount: 15600, 
+    followingCount: 12, 
+    balance: 1240.50, 
+    storageUsed: 1200, 
+    maxStorage: MAX_STORAGE_PER_CREATOR_MB,
+    growthMinutesUsed: 42,
+    growthMinutesTotal: GROWTH_BOOST_MINUTES_LIMIT
+  },
   youtubeConfig: { channelId: 'UC_astro', handle: '@exaltedvenus', isConnected: true },
   subscriptionTiers: DEFAULT_TIERS
 };
@@ -45,7 +55,7 @@ export const MOCK_TRANSACTIONS = [
   { id: 'tx-3', amount: 65.00, fee: 3.25, date: new Date(), creatorId: 'exalted-venus-001' },
 ];
 
-export const MOCK_FOLLOWERS: User[] = [{ id: 'user-101', username: 'marko', displayName: 'Marko J.', avatar: 'https://i.pravatar.cc/150?u=marko', bio: "Pratilac", role: 'FOLLOWER', isVerified: false, paymentMethods: { isVerified: false }, stats: { followersCount: 0, followingCount: 1, storageUsed: 0, maxStorage: 5120 } }];
+export const MOCK_FOLLOWERS: User[] = [{ id: 'user-101', username: 'marko', displayName: 'Marko J.', avatar: 'https://i.pravatar.cc/150?u=marko', bio: "Pratilac", role: 'FOLLOWER', isVerified: false, paymentMethods: { isVerified: false }, stats: { followersCount: 0, followingCount: 1, storageUsed: 0, maxStorage: 5120, growthMinutesUsed: 0, growthMinutesTotal: 0 } }];
 export const MOCK_FOLLOWER = MOCK_FOLLOWERS[0];
 export const ALL_USERS = [EXALTED_VENUS, ...MOCK_FOLLOWERS];
 export const MOCK_CREATORS = [EXALTED_VENUS];

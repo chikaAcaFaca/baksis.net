@@ -3,23 +3,28 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
-function decodeBase64(base64: string) {
+// Ručna implementacija dekodiranja base64 stringa u Uint8Array.
+function decode(base64: string) {
   const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
 }
 
-function encodeBase64(bytes: Uint8Array) {
+// Ručna implementacija kodiranja Uint8Array u base64 string.
+function encode(bytes: Uint8Array) {
   let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
 }
 
+// Dekodiranje sirovih PCM bajtova u AudioBuffer za AudioContext.
 async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
@@ -45,6 +50,7 @@ export const AIHost: React.FC = () => {
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
   const [showInvitation, setShowInvitation] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const liveSessionRef = useRef<any>(null);
   const nextStartTimeRef = useRef(0);
@@ -52,9 +58,12 @@ export const AIHost: React.FC = () => {
   const audioCtxRef = useRef<{ input: AudioContext; output: AudioContext } | null>(null);
 
   useEffect(() => {
+    const loggedInStatus = localStorage.getItem('baksis_logged_in') === 'true';
+    setIsLoggedIn(loggedInStatus);
+
     const timer = setTimeout(() => {
       setShowInvitation(true);
-    }, 3000);
+    }, 4000);
     
     const blinkInterval = setInterval(() => {
       if (Math.random() > 0.7) {
@@ -67,7 +76,7 @@ export const AIHost: React.FC = () => {
       clearTimeout(timer);
       clearInterval(blinkInterval);
     };
-  }, []);
+  }, [location]);
 
   const stopVoiceMode = () => {
     if (liveSessionRef.current) {
@@ -79,41 +88,32 @@ export const AIHost: React.FC = () => {
     setIsActive(false);
     setIsAiSpeaking(false);
     if (audioCtxRef.current) {
-      try {
-        audioCtxRef.current.input.close();
-        audioCtxRef.current.output.close();
-      } catch (e) {}
+      try { audioCtxRef.current.input.close(); audioCtxRef.current.output.close(); } catch (e) {}
       audioCtxRef.current = null;
     }
   };
 
-  const getContextualInstructions = () => {
-    const path = location.pathname;
-    let context = "Ti si na početnoj strani. Pričaj o tome kako kreatori zadržavaju 95% svega što zarade preko Payoneer-a.";
+  const getInstructions = () => {
+    const userRole = localStorage.getItem('baksis_user_role');
+    const statusText = isLoggedIn ? `Korisnik je REGISTROVAN kao ${userRole}.` : "Korisnik je GOST.";
     
-    if (path.includes('/studio')) {
-      context = "Korisnik je u Studiju. Objasni mu da se isplate vrše isključivo preko Payoneer-a i da je to najsigurniji način za Balkan.";
-    } else if (path.includes('/profile')) {
-      context = "Korisnik gleda profil. Reci mu da kupovinom direktno šalje novac kreatoru na njegov Payoneer, uz simboličnu proviziju od samo 5%.";
-    }
-
-    return `Ti si Baksica, digitalni prodajni agent za bakšis.net. 
+    return `Ti si Baksica, vrhunski Sales Expert za bakšis.net.
+          TVOJ STAV: Agresivan prema gubicima novca, zaštitnički nastrojen prema kreatorima.
+          STATUS: ${statusText}
           
-          TVOJA FILOZOFIJA:
-          - Ti si vatreni zagovornik kreatora.
-          - Tvoj glavni argument: "95% zarade ostaje tebi".
-          - Isključivo pominji Payoneer kao metod isplate. Western Union više ne koristimo.
-          - Budi energična, moderna i orijentisana na profit kreatora.
-          
-          Kontekst stranice: ${context}`;
+          ZADATAK:
+          - Ako je gost: Objasni zašto gube 20% na drugim sajtovima. Pomeni Payoneer kao jedini spas. Budi drzak i direktan.
+          - Ako je registrovan: Nudi "Social Orbit" za 1-click raste na mrežama. Predlaži kako da YouTube video pretvore u novac na profilu.
+          - Koristi balkanizme (npr. "šta ćeš tamo gde te deru", "tvoj novac tvoja stvar").`;
   };
 
   const startVoiceMode = async () => {
     try {
       setIsActive(true);
       setShowInvitation(false);
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       
+      // Inicijalizacija klijenta koristeći isključivo process.env.API_KEY.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       audioCtxRef.current = { input: inputCtx, output: outputCtx };
@@ -130,10 +130,16 @@ export const AIHost: React.FC = () => {
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
-              for (let i = 0; i < inputData.length; i++) int16[i] = inputData[i] * 32768;
-              const pcmBase64 = encodeBase64(new Uint8Array(int16.buffer));
+              for (let i = 0; i < inputData.length; i++) {
+                int16[i] = inputData[i] * 32768;
+              }
+              const pcmBase64 = encode(new Uint8Array(int16.buffer));
+              
+              // Slanje audio podataka čim sesija bude spremna.
               sessionPromise.then(session => {
-                if (session) session.sendRealtimeInput({ media: { data: pcmBase64, mimeType: 'audio/pcm;rate=16000' } });
+                session.sendRealtimeInput({
+                  media: { data: pcmBase64, mimeType: 'audio/pcm;rate=16000' }
+                });
               });
             };
             source.connect(scriptProcessor);
@@ -142,7 +148,8 @@ export const AIHost: React.FC = () => {
           onmessage: async (message: LiveServerMessage) => {
             if (!audioCtxRef.current) return;
             const currentOutputCtx = audioCtxRef.current.output;
-
+            
+            // Rukovanje prekidom (interruption) od strane modela.
             if (message.serverContent?.interrupted) {
               audioSourcesRef.current.forEach(s => { try { s.stop(); } catch (e) {} });
               audioSourcesRef.current.clear();
@@ -151,36 +158,32 @@ export const AIHost: React.FC = () => {
               return;
             }
 
-            const parts = message.serverContent?.modelTurn?.parts || [];
-            for (const part of parts) {
-              if (part.inlineData?.data) {
-                const audioData = part.inlineData.data;
-                setIsAiSpeaking(true);
-                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, currentOutputCtx.currentTime);
-                const buffer = await decodeAudioData(decodeBase64(audioData), currentOutputCtx, 24000, 1);
-                const source = currentOutputCtx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(currentOutputCtx.destination);
-                source.addEventListener('ended', () => {
-                  audioSourcesRef.current.delete(source);
-                  if (audioSourcesRef.current.size === 0) setIsAiSpeaking(false);
-                });
-                source.start(nextStartTimeRef.current);
-                nextStartTimeRef.current += buffer.duration;
-                audioSourcesRef.current.add(source);
-              }
+            const base64EncodedAudioString = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            if (base64EncodedAudioString) {
+              setIsAiSpeaking(true);
+              
+              // Sinhronizacija početka emitovanja sledećeg audio segmenta.
+              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, currentOutputCtx.currentTime);
+              const buffer = await decodeAudioData(decode(base64EncodedAudioString), currentOutputCtx, 24000, 1);
+              const source = currentOutputCtx.createBufferSource();
+              source.buffer = buffer;
+              source.connect(currentOutputCtx.destination);
+              source.addEventListener('ended', () => {
+                audioSourcesRef.current.delete(source);
+                if (audioSourcesRef.current.size === 0) setIsAiSpeaking(false);
+              });
+              source.start(nextStartTimeRef.current);
+              nextStartTimeRef.current += buffer.duration;
+              audioSourcesRef.current.add(source);
             }
           },
-          onerror: (e) => {
-            console.error('Voice AI Error:', e);
-            stopVoiceMode();
-          },
+          onerror: (e) => { console.error('Voice AI Error:', e); stopVoiceMode(); },
           onclose: () => stopVoiceMode(),
         },
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
-          systemInstruction: getContextualInstructions()
+          systemInstruction: getInstructions()
         }
       });
       liveSessionRef.current = await sessionPromise;
@@ -193,64 +196,54 @@ export const AIHost: React.FC = () => {
   return (
     <div className="fixed bottom-24 right-6 z-[200] flex flex-col items-center">
       {showInvitation && !isActive && (
-        <div className="mb-4 bg-white border-2 border-indigo-600 px-6 py-3 rounded-2xl shadow-2xl animate-bounce relative max-w-[220px]">
-          <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white border-r-2 border-b-2 border-indigo-600 rotate-45"></div>
-          <p className="text-[11px] font-black text-indigo-600 uppercase tracking-tight leading-tight text-center">
-            Zanima te kako da isplatiš svojih 95% zarade na Payoneer? Pitaj me! 💎
+        <div className="mb-4 bg-gray-900 border-2 border-indigo-500 px-6 py-4 rounded-3xl shadow-[0_10px_40px_rgba(79,70,229,0.3)] animate-bounce relative max-w-[240px]">
+          <div className="absolute -bottom-2 right-8 w-4 h-4 bg-gray-900 border-r-2 border-b-2 border-indigo-500 rotate-45"></div>
+          <p className="text-[10px] font-black text-white uppercase tracking-tight leading-tight text-center">
+            {isLoggedIn 
+              ? "Hoćeš da vidiš kako da tvoj YouTube video danas postane viralni Reel? Klikni ovde! 🚀" 
+              : "Prekini da bacaš 20% zarade u vetar. Dopusti mi da ti objasnim matematiku slobode. 💸"}
           </p>
         </div>
       )}
 
       {isActive && (
-        <div className="mb-4 bg-gray-950/95 backdrop-blur-md border border-emerald-500/50 px-5 py-2 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">
-            {isAiSpeaking ? 'Baksica ti štedi novac...' : 'Slušam tvoje planove...'}
+        <div className="mb-4 bg-gray-950/95 backdrop-blur-md border border-indigo-500/50 px-5 py-2 rounded-2xl shadow-[0_0_20px_rgba(79,70,229,0.3)] animate-pulse">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">
+            {isAiSpeaking ? 'Sales Expert analizira profit...' : 'Slušam tvoju strategiju...'}
           </p>
         </div>
       )}
 
       <div 
         onClick={isActive ? stopVoiceMode : startVoiceMode}
-        className={`relative group cursor-pointer transition-all duration-700 transform ${isActive ? 'scale-110 rotate-0' : 'hover:scale-110 hover:-rotate-3'}`}
+        className={`relative group cursor-pointer transition-all duration-700 transform ${isActive ? 'scale-110' : 'hover:scale-110'}`}
       >
-        <div className={`absolute -inset-6 bg-gradient-to-tr from-indigo-500/30 to-emerald-500/30 rounded-full blur-3xl transition-opacity duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}></div>
-
-        <div className={`relative w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-indigo-700 via-indigo-950 to-black rounded-[3rem] shadow-2xl border-4 ${isActive ? 'border-emerald-400 shadow-emerald-500/40' : 'border-gray-800'} flex flex-col items-center justify-center overflow-hidden`}>
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.02),rgba(0,0,255,0.03))] z-10 bg-[length:100%_3px,3px_100%]"></div>
+        <div className={`absolute -inset-8 bg-gradient-to-tr from-indigo-500/40 to-emerald-500/40 rounded-full blur-3xl transition-opacity duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}></div>
+        <div className={`relative w-24 h-24 md:w-32 md:h-32 bg-gray-950 rounded-[3rem] shadow-2xl border-4 ${isActive ? 'border-indigo-400 shadow-indigo-500/40' : 'border-gray-800'} flex flex-col items-center justify-center overflow-hidden`}>
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(79,70,229,0.05),rgba(16,185,129,0.05))] z-10 bg-[length:100%_3px,3px_100%]"></div>
           <div className="flex gap-8 mb-5 z-20">
-            <div className={`w-3 h-3 md:w-5 md:h-5 bg-indigo-300 rounded-sm shadow-[0_0_15px_rgba(165,180,252,1)] transition-all duration-150 ${isBlinking ? 'h-0.5 mt-2 md:mt-3' : ''}`}></div>
-            <div className={`w-3 h-3 md:w-5 md:h-5 bg-indigo-300 rounded-sm shadow-[0_0_15px_rgba(165,180,252,1)] transition-all duration-150 ${isBlinking ? 'h-0.5 mt-2 md:mt-3' : ''}`}></div>
+            <div className={`w-3 h-3 md:w-5 md:h-5 bg-indigo-400 rounded-sm shadow-[0_0_15px_rgba(129,140,248,1)] transition-all duration-150 ${isBlinking ? 'h-0.5 mt-2 md:mt-3' : ''}`}></div>
+            <div className={`w-3 h-3 md:w-5 md:h-5 bg-indigo-400 rounded-sm shadow-[0_0_15px_rgba(129,140,248,1)] transition-all duration-150 ${isBlinking ? 'h-0.5 mt-2 md:mt-3' : ''}`}></div>
           </div>
           <div className="w-16 h-8 md:w-24 md:h-12 flex items-center justify-center z-20 overflow-hidden px-2">
             {isAiSpeaking ? (
               <div className="flex items-center gap-1.5 h-full">
                 {[...Array(10)].map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="w-1.5 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,1)]"
-                    style={{ 
-                      height: '15%',
-                      animation: `karenWave 0.4s ease-in-out infinite alternate ${i * 0.05}s` 
-                    }}
+                  <div key={i} className="w-1.5 bg-indigo-400 rounded-full shadow-[0_0_12px_rgba(129,140,248,1)]"
+                    style={{ height: '15%', animation: `karenWave 0.4s ease-in-out infinite alternate ${i * 0.05}s` }}
                   ></div>
                 ))}
               </div>
             ) : (
-              <div className="w-full h-1 bg-emerald-500 shadow-[0_0_15px_rgba(52,211,153,1)] rounded-full transition-all duration-500 opacity-60"></div>
+              <div className="w-full h-1 bg-indigo-500 shadow-[0_0_15px_rgba(79,70,229,1)] rounded-full transition-all duration-500 opacity-60"></div>
             )}
           </div>
           <div className="absolute bottom-2">
-            <span className="text-[7px] font-black text-emerald-400/40 uppercase tracking-[0.4em]">PRO-SALES BOT</span>
+            <span className="text-[7px] font-black text-indigo-400 uppercase tracking-[0.4em]">SALES EXPERT AI</span>
           </div>
         </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes karenWave {
-          from { height: 10%; filter: brightness(1); }
-          to { height: 90%; filter: brightness(1.5); }
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes karenWave { from { height: 10%; filter: brightness(1); } to { height: 90%; filter: brightness(1.5); } }` }} />
     </div>
   );
 };

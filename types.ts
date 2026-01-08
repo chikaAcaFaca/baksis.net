@@ -9,6 +9,15 @@ export interface SubscriptionTier {
   color: string;
 }
 
+export interface SocialOrbitConfig {
+  isConnected: boolean;
+  platform: 'INSTAGRAM' | 'TIKTOK' | 'FACEBOOK' | 'X';
+  lastPostDate?: string;
+  isGrowthBoostActive: boolean;
+  minutesUsed: number;
+  minutesTotal: number;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -31,6 +40,8 @@ export interface User {
     balance?: number;
     storageUsed: number;
     maxStorage: number;
+    growthMinutesUsed: number;
+    growthMinutesTotal: number;
     raffleEntries?: {
       daily: number;
       weekly: number;
@@ -43,6 +54,7 @@ export interface User {
     isConnected: boolean;
     lastSync?: Date;
   };
+  socialOrbit?: SocialOrbitConfig[];
   subscriptionTiers?: SubscriptionTier[];
   ownedVideos?: string[];
   socialLinks?: {
@@ -65,16 +77,18 @@ export interface DigitalProduct {
   fileName?: string;
 }
 
-export interface ExtendedVideo {
+export interface AIClippingSuggestion {
   id: string;
-  creatorId: string;
-  title: string;
-  description: string;
-  price: number;
-  duration: string;
-  thumbnailUrl: string;
-  videoUrl: string; 
-  isExtended: boolean;
-  raffleEntriesGranted: number;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  hook: string;
+  captions: string;
+  selectedRatio: '9:16' | '16:9';
+  selectedRes: '720p' | '1080p';
+  platformCaptions: {
+    tiktok: string;
+    instagram: string;
+    x: string;
+  };
 }
-// ... ostali tipovi ostaju isti
