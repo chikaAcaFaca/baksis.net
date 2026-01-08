@@ -1,6 +1,66 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
+export const syncYouTubeChannel = async (handle: string) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Pronađi najnovije informacije o YouTube kanalu korisnika ${handle}. 
+      Potrebni su mi:
+      1. URL profilne slike.
+      2. URL banner slike (header).
+      3. Lista od 5 najnovijih standardnih videa (naslov i URL).
+      4. Lista od 5 najnovijih Shorts videa (naslov i URL).
+      5. Kratak opis kanala.
+      6. Glavne boje brenda (hex kodovi).`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            avatarUrl: { type: Type.STRING },
+            bannerUrl: { type: Type.STRING },
+            bio: { type: Type.STRING },
+            brandColors: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            latestVideos: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  url: { type: Type.STRING },
+                  thumbnail: { type: Type.STRING }
+                }
+              }
+            },
+            latestShorts: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return JSON.parse(response.text || '{}');
+  } catch (error) {
+    console.error("YouTube Sync Error:", error);
+    return null;
+  }
+};
+
 export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -15,9 +75,7 @@ export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: s
       2. Viralni 'Hook' (rečenica koja se pojavljuje na ekranu u prve 3 sekunde).
       3. Kompletne 'Captions' (titlove) za ceo trajanje klipa, formatirane za lako čitanje.
       4. Predlog najboljeg formata (9:16 ili 16:9) i rezolucije (720p/1080p).
-      5. Optimizovan opis za TikTok, Instagram i X.
-      
-      OSIGURAJ da titlovi budu privlačni i prilagođeni balkanskom slengu ako je prikladno.`,
+      5. Optimizovan opis za TikTok, Instagram i X.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -62,65 +120,6 @@ export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: s
     }));
   } catch (error) {
     console.error("AI Clipping Error:", error);
-    return null;
-  }
-};
-
-export const getSalesExpertAdvice = async (userMessage: string, isRegistered: boolean, userData?: any) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  const systemPrompt = isRegistered 
-    ? `Ti si Baksica, Sales Expert za bakšis.net. Korisnik JE REGISTROVAN. 
-       FOKUS: Prodaj 'Growth Boost' ($4.99/100 min).
-       Objasni da sa 100 minuta mogu pokriti ceo mesec sadržaja na 3 mreže.
-       Budi podrška, profesionalna i malo "bossy" oko njihovog vremena.`
-    : `Ti si Baksica, Sales Expert. Korisnik NIJE REGISTROVAN. 
-       FOKUS: Zašto OnlyFans nije za njih (uzimaju im previše).
-       Pomeni 'Social Orbit' alat koji pretvara YouTube u novac.`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: userMessage,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.9,
-      },
-    });
-    return response.text || "Registruj se i iskoristi 100 minuta AI magije za rast profila.";
-  } catch (e) {
-    return "Mreža je puna kreatora. Probaj ponovo za sekund.";
-  }
-};
-
-export const parsePriceList = async (text: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Pretvori ovaj tekstualni opis usluga u strukturirani JSON niz proizvoda za prodavnicu.
-      Tekst: ${text}`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              description: { type: Type.STRING },
-              price: { type: Type.NUMBER },
-              type: { type: Type.STRING }
-            },
-            required: ["name", "description", "price", "type"]
-          }
-        }
-      }
-    });
-
-    return JSON.parse(response.text || '[]');
-  } catch (error) {
-    console.error("AI Price Parse Error:", error);
     return null;
   }
 };
