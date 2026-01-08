@@ -1,7 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Funkcija koja bezbedno čita env promenljive bez obzira na okruženje
 const getEnv = (key: string): string => {
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
     return process.env[key] as string;
@@ -12,13 +11,10 @@ const getEnv = (key: string): string => {
   return '';
 };
 
-// Uzimamo vrednosti. Ako ne postoje, stavljamo prazan string.
-// Supabase klijent će raditi samo ako su ove vrednosti popunjene u .env ili na Vercelu.
 const supabaseUrl = getEnv('SUPABASE_URL');
 const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
 
-// Inicijalizujemo klijent. Ako ključevi fale, aplikacija će ući u "Demo Mode" 
-// (pogledaj AuthModal.tsx logiku koju smo ranije dodali).
+// Kreiramo klijent koji će upravljati sesijama u browseru
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co', 
   supabaseAnonKey || 'placeholder-key',
@@ -26,11 +22,8 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      storage: window.localStorage
     }
   }
 );
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.log("ℹ️ Bakšis.net: Ključevi nisu detektovani. Sistem je u Demo režimu (UI testiranje).");
-}
