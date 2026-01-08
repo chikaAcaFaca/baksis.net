@@ -74,7 +74,7 @@ export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
   { 
     id: 'p-natal-annual', 
     name: 'Natalna Karta + Godišnji Horoskop', 
-    description: 'Kompletno tumačenje životnog horoskopa + prognoza za 12 meseci. Trajanje: 45 min.', 
+    description: 'Tumačenje životnog horoskopa + prognoza za 12 meseci (45 min WhatsApp/Viber). Potrebni podaci o rođenju.', 
     price: 120.00, 
     type: 'CONSULTATION', 
     imageUrl: 'https://images.unsplash.com/photo-1515940175183-6798529cb860?w=400&q=80' 
@@ -82,7 +82,7 @@ export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
   { 
     id: 'p-synastry', 
     name: 'Uporedni Horoskop (Sinastrija)', 
-    description: 'Analiza odnosa dve osobe. Detaljni aspekti privlačnosti i izazova.', 
+    description: 'Analiza odnosa za par (130 EUR). Potrebni podaci za obe osobe.', 
     price: 130.00, 
     type: 'CONSULTATION', 
     imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=400&q=80' 
@@ -90,15 +90,15 @@ export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
   { 
     id: 'p-tarot-session', 
     name: 'Tarot Tumačenje Uživo', 
-    description: 'Gledate svako otvaranje karata i razgovaramo uživo putem video poziva.', 
+    description: 'Video poziv uživo. Gledate svako otvaranje karata i razgovaramo o vašim temama.', 
     price: 65.00, 
     type: 'TAROT_READING', 
     imageUrl: 'https://images.unsplash.com/photo-1576669801775-ffed63192b48?w=400&q=80' 
   },
   { 
     id: 'p-audio-response', 
-    name: 'Audio Odgovor na Pitanje', 
-    description: 'Snimljen audio odgovor na jedno konkretno pitanje + jedno gratis pitanje.', 
+    name: 'Audio Odgovor (1+1 gratis)', 
+    description: 'Snimljen audio odgovor na jedno konkretno pitanje + jedno dodatno gratis.', 
     price: 55.00, 
     type: 'FILE_DOWNLOAD', 
     imageUrl: 'https://images.unsplash.com/photo-1583484963886-cccc2bf51944?w=400&q=80' 

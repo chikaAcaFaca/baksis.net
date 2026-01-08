@@ -16,24 +16,32 @@ export const Profile: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [syncedData, setSyncedData] = useState<any>(null);
   
-  // States za Privatno Čitanje
+  // Privatno Čitanje state
   const [tarotDuration, setTarotDuration] = useState<20 | 30 | 45>(20);
   const tarotPrices = { 20: 65, 30: 75, 45: 85 };
   
-  const [bookingDate, setBookingDate] = useState<string>('');
+  const [bookingDate, setBookingDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [bookingTime, setBookingTime] = useState<string>('');
   
-  // Forma za Natalne podatke
-  const [natalData, setNatalData] = useState({
+  const [natalForm, setNatalForm] = useState({
     name: '',
     birthDate: '',
     birthTime: '',
     birthPlace: '',
-    lastBirthdayLocation: ''
+    birthdayLocation: ''
   });
 
+  const [synastryForm, setSynastryForm] = useState({
+    person1: '',
+    birth1: '',
+    person2: '',
+    birth2: ''
+  });
+
+  const [audioQuestion, setAudioQuestion] = useState('');
+
   const availableSlots = ['10:00', '11:00', '13:00', '14:00', '16:00', '17:00'];
-  const busySlots = ['12:00', '15:00', '18:00'];
+  const busySlots = ['12:00', '15:00', '18:00']; // Simulacija zauzetosti iz Google Calendar-a
 
   useEffect(() => {
     try {
@@ -48,33 +56,47 @@ export const Profile: React.FC = () => {
   const normalizedUsername = username?.toLowerCase();
   const user: User = normalizedUsername === MOCK_FOLLOWER.username.toLowerCase() ? MOCK_FOLLOWER : EXALTED_VENUS;
   
-  const handleAction = (product: any, price?: number) => {
+  const handleBooking = (product: any, price?: number) => {
     if (!isLoggedIn) {
       setIsAuthModalOpen(true);
       return;
     }
 
-    // Provera da li su uneti podaci za Natalnu kartu
-    if ((product.id === 'p-natal-annual' || product.id === 'p-synastry') && !natalData.name) {
-      alert("Molimo popunite podatke za rođenje pre zakazivanja.");
+    if (!bookingTime) {
+      alert("Molimo izaberite slobodan termin u kalendaru.");
       return;
     }
 
-    if (!bookingDate || !bookingTime) {
-      alert("Molimo izaberite termin u kalendaru.");
-      return;
+    let extraData: any = { bookingDate, bookingTime };
+    
+    if (product.id === 'p-natal-annual') {
+      if (!natalForm.name || !natalForm.birthDate || !natalForm.birthTime || !natalForm.birthPlace) {
+        alert("Molimo popunite sve podatke o rođenju."); return;
+      }
+      extraData = { ...extraData, ...natalForm };
+    } else if (product.id === 'p-synastry') {
+      if (!synastryForm.person1 || !synastryForm.person2) {
+        alert("Molimo popunite podatke za obe osobe."); return;
+      }
+      extraData = { ...extraData, ...synastryForm };
+    } else if (product.id === 'p-audio-response') {
+      if (!audioQuestion.trim()) {
+        alert("Napišite vaše pitanje za audio odgovor."); return;
+      }
+      extraData = { ...extraData, question: audioQuestion };
     }
 
     setPaymentModal({ 
       isOpen: true, 
       product, 
       priceOverride: price,
-      extraData: { ...natalData, bookingDate, bookingTime }
+      extraData
     });
   };
 
   const extendedVideos = EXALTED_VENUS_PRODUCTS.filter(p => p.type === 'EXTENDED_VIDEO');
-  const privateProducts = EXALTED_VENUS_PRODUCTS.filter(p => p.type !== 'EXTENDED_VIDEO');
+  const consultations = EXALTED_VENUS_PRODUCTS.filter(p => p.type === 'CONSULTATION');
+  const audioResp = EXALTED_VENUS_PRODUCTS.find(p => p.id === 'p-audio-response');
 
   return (
     <div className="bg-[#0f0f0f] min-h-screen pb-40 text-white selection:bg-indigo-500">
@@ -84,19 +106,19 @@ export const Profile: React.FC = () => {
         <PaymentModal 
           isOpen={paymentModal.isOpen} 
           onClose={() => setPaymentModal(null)} 
-          itemName={`${paymentModal.product.name}${paymentModal.priceOverride && tarotPrices[tarotDuration as keyof typeof tarotPrices] === paymentModal.priceOverride ? ` (${tarotDuration} min)` : ''} - ${paymentModal.extraData?.bookingDate} @ ${paymentModal.extraData?.bookingTime}`} 
+          itemName={`${paymentModal.product.name}${paymentModal.priceOverride && tarotPrices[tarotDuration as keyof typeof tarotPrices] === paymentModal.priceOverride ? ` (${tarotDuration} min)` : ''}`} 
           price={paymentModal.priceOverride || paymentModal.product.price} 
           onSuccess={() => {
-            // Simulacija slanja u Creator Chat
-            console.log("Notifikacija poslata Kreatoru:", paymentModal.extraData);
+            // Logika za Chat dojavu i Google Calendar blokiranje
+            console.log("Termin rezervisan i dojava poslata Kreatoru.");
           }} 
           isInternal={user.isInternalProject}
         />
       )}
 
-      {/* YouTube Banner */}
-      <div className="h-44 md:h-[320px] w-full relative overflow-hidden group border-b border-white/5">
-        <img src={syncedData?.bannerUrl || user.banner} className="w-full h-full object-cover opacity-40 transition-transform duration-[20s] linear animate-slow-zoom" alt="" />
+      {/* Banner */}
+      <div className="h-48 md:h-[350px] w-full relative overflow-hidden border-b border-white/5">
+        <img src={syncedData?.bannerUrl || user.banner} className="w-full h-full object-cover opacity-40 animate-slow-zoom" alt="" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent"></div>
       </div>
 
@@ -114,16 +136,16 @@ export const Profile: React.FC = () => {
                  <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">{user.displayName}</h1>
                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-6 text-[10px] font-black uppercase tracking-widest text-gray-500">
                     <span className="text-white">@{user.username}</span>
-                    <span className="bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-lg border border-indigo-500/20 uppercase tracking-widest font-black text-[9px]">Google Calendar Sync Active 📅</span>
+                    <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-lg border border-emerald-500/20">LIVE ZAKAZIVANJE AKTIVNO 📅</span>
                  </div>
-                 <p className="text-sm font-medium text-gray-400 max-w-2xl leading-relaxed italic line-clamp-2 md:line-clamp-none">
+                 <p className="text-sm font-medium text-gray-400 max-w-2xl leading-relaxed italic">
                     {syncedData?.bio || user.bio}
                  </p>
               </div>
           </div>
 
           <div className="flex border-b border-white/10 overflow-x-auto scrollbar-hide">
-            {['HOME', 'VIDEOS', 'SHORTS', 'EXTENDED', 'PRIVATNO'].map(tab => (
+            {['HOME', 'EXTENDED', 'PRIVATNO'].map(tab => (
               <button 
                 key={tab} 
                 onClick={() => setActiveTab(tab as any)} 
@@ -145,7 +167,30 @@ export const Profile: React.FC = () => {
                      <ul className="space-y-4 mb-10 text-[9px] font-black text-gray-500 uppercase tracking-widest leading-relaxed">
                         {tier.benefits.map((b, i) => <li key={i} className="flex gap-2"><span>→</span> {b}</li>)}
                      </ul>
-                     <button onClick={() => setPaymentModal({ isOpen: true, product: { ...tier, type: 'SUBSCRIPTION' } as any })} className="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-all">Odaberi Plan</button>
+                     <button onClick={() => setPaymentModal({ isOpen: true, product: { ...tier, type: 'SUBSCRIPTION' } as any })} className="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 group-hover:text-white transition-all">Pretplati se</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'EXTENDED' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                {extendedVideos.map(video => (
+                  <div key={video.id} className="bg-gray-900/40 rounded-[3.5rem] overflow-hidden border border-white/5 group shadow-2xl hover:border-white/10 transition-all">
+                     <div className="relative aspect-video">
+                        <img src={video.imageUrl} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" alt="" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                           <button onClick={() => setPaymentModal({ isOpen: true, product: video })} className="bg-white text-black px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl">Otključaj Sadržaj 🔓</button>
+                        </div>
+                        <div className="absolute top-6 right-6 bg-black/80 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border border-white/10">PRODUŽENO</div>
+                     </div>
+                     <div className="p-10">
+                        <h3 className="text-xl font-black uppercase mb-4 tracking-tighter">{video.name}</h3>
+                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                           <span className="text-2xl font-black text-white tracking-tighter">${video.price}</span>
+                           <button onClick={() => setPaymentModal({ isOpen: true, product: video })} className="bg-white/5 text-white px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white hover:text-black transition-all">Kupi</button>
+                        </div>
+                     </div>
                   </div>
                 ))}
               </div>
@@ -153,34 +198,35 @@ export const Profile: React.FC = () => {
 
             {activeTab === 'PRIVATNO' && (
               <div className="space-y-16">
-                 {/* Google Calendar Simulator */}
-                 <div className="bg-gray-950/50 rounded-[4rem] border border-white/5 p-8 md:p-16 relative overflow-hidden">
+                 {/* Google Calendar Picker Section */}
+                 <div className="bg-gray-950/50 rounded-[4rem] border border-white/5 p-8 md:p-16">
                     <div className="max-w-4xl mx-auto space-y-12">
                        <div className="text-center">
-                          <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">Zakazivanje Termina</h2>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Podaci o slobodnim terminima dolaze direktno sa Google Calendar-a kreatora</p>
+                          <h2 className="text-3xl font-black uppercase tracking-tighter mb-4 text-indigo-500">Zakazivanje Termina</h2>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic leading-relaxed">
+                            "Podaci dolaze direktno sa mog Google Calendar-a. Vidite samo slobodne termine za vaše čitanje."
+                          </p>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                           <div className="space-y-8">
-                             <div className="bg-black/40 p-6 rounded-3xl border border-white/5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-4">1. Izaberi Datum</label>
+                             <div>
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-4">1. Dan (Google Calendar Sync)</label>
                                 <input 
                                   type="date" 
                                   value={bookingDate}
                                   onChange={(e) => setBookingDate(e.target.value)}
-                                  className="w-full bg-transparent text-white font-black text-lg outline-none uppercase"
+                                  className="w-full bg-black/40 border border-white/5 px-6 py-4 rounded-2xl text-white font-black outline-none"
                                 />
                              </div>
-
-                             <div className="bg-black/40 p-6 rounded-3xl border border-white/5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-4">2. Slobodni Termini</label>
+                             <div>
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500 block mb-4">2. Vreme (Slobodni Slotovi)</label>
                                 <div className="grid grid-cols-3 gap-3">
                                    {availableSlots.map(slot => (
                                      <button 
                                       key={slot} 
                                       onClick={() => setBookingTime(slot)}
-                                      className={`py-3 rounded-xl text-[10px] font-black transition-all border ${bookingTime === slot ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
+                                      className={`py-3 rounded-xl text-[10px] font-black border transition-all ${bookingTime === slot ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl' : 'border-white/10 text-gray-400 hover:border-white/40'}`}
                                      >
                                        {slot}
                                      </button>
@@ -193,77 +239,111 @@ export const Profile: React.FC = () => {
                                 </div>
                              </div>
                           </div>
-
-                          <div className="bg-indigo-600/5 p-10 rounded-[3rem] border border-indigo-600/10 flex flex-col justify-center">
-                             <h4 className="text-xl font-black uppercase tracking-tighter mb-6">Napomena o Terminima</h4>
-                             <p className="text-xs text-gray-400 leading-relaxed italic mb-8">
-                                "Čim obavite uplatu, termin se automatski potvrđuje. Creator će vas kontaktirati putem bakšis.net četa ili WhatsApp-a radi potvrde detalja."
-                             </p>
-                             <div className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-white/5">
-                                <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
-                                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                          
+                          <div className="flex flex-col justify-center space-y-6 bg-indigo-600/5 p-10 rounded-[3rem] border border-indigo-500/10">
+                             <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center">
+                                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/></svg>
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Bezbedno zakazivanje</span>
+                                <div>
+                                   <h4 className="text-sm font-black uppercase tracking-tight">Rezervacija</h4>
+                                   <p className="text-[10px] font-bold text-gray-500">{bookingDate} @ {bookingTime || 'Izaberi vreme'}</p>
+                                </div>
                              </div>
+                             <p className="text-[10px] font-medium text-gray-400 leading-relaxed italic">
+                                "Čim legne uplata, termin se blokira u mom kalendaru i dobijam obaveštenje da počnemo sa pripremama."
+                             </p>
                           </div>
                        </div>
                     </div>
                  </div>
 
-                 {/* Products Grid */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Tarot Interactive Card */}
-                    <div className="bg-gray-900/40 rounded-[4rem] overflow-hidden border border-white/5 flex flex-col md:flex-row min-h-[500px] shadow-2xl">
-                        <div className="md:w-1/2 relative overflow-hidden group">
-                           <img src="https://images.unsplash.com/photo-1576669801775-ffed63192b48?w=800&q=80" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[10s]" alt="" />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                        </div>
-                        <div className="p-10 md:w-1/2 flex flex-col justify-center">
-                           <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 leading-none">Tarot Uživo<br/><span className="text-indigo-500">Video Poziv</span></h3>
-                           <div className="flex gap-2 p-1.5 bg-black/40 rounded-2xl border border-white/5 mb-8">
-                              {[20, 30, 45].map(d => (
-                                <button 
-                                  key={d} 
-                                  onClick={() => setTarotDuration(d as any)} 
-                                  className={`flex-1 py-3 rounded-xl text-[9px] font-black transition-all ${tarotDuration === d ? 'bg-white text-black' : 'text-gray-500 hover:text-white'}`}
-                                >
-                                  {d} MIN
-                                </button>
-                              ))}
-                           </div>
-                           <div className="flex items-center justify-between">
-                              <div className="text-4xl font-black text-white tracking-tighter">€{tarotPrices[tarotDuration as keyof typeof tarotPrices]}</div>
-                              <button 
-                                onClick={() => handleAction({ id: 'p-tarot-session', name: 'Tarot Tumačenje Uživo' }, tarotPrices[tarotDuration as keyof typeof tarotPrices])} 
-                                className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all"
-                              >
-                                Zakaži
-                              </button>
-                           </div>
-                        </div>
-                    </div>
-
-                    {/* Natalna / Sinastrija Cards with Data Form */}
-                    <div className="bg-gray-900/40 rounded-[4rem] p-10 border border-white/5 space-y-8">
-                       <h3 className="text-2xl font-black uppercase tracking-tighter text-gray-200">Podaci za Natalnu Kartu</h3>
-                       <div className="grid grid-cols-2 gap-4">
-                          <input type="text" placeholder="Ime i Prezime" value={natalData.name} onChange={e => setNatalData({...natalData, name: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500" />
-                          <input type="text" placeholder="Datum rođenja" value={natalData.birthDate} onChange={e => setNatalData({...natalData, birthDate: e.target.value})} className="bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none" />
-                          <input type="text" placeholder="Tačno vreme rođenja" value={natalData.birthTime} onChange={e => setNatalData({...natalData, birthTime: e.target.value})} className="bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none" />
-                          <input type="text" placeholder="Mesto rođenja" value={natalData.birthPlace} onChange={e => setNatalData({...natalData, birthPlace: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none" />
-                          <input type="text" placeholder="Gde ste proveli poslednji rođendan?" value={natalData.lastBirthdayLocation} onChange={e => setNatalData({...natalData, lastBirthdayLocation: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none" />
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    {/* Tarot Section */}
+                    <div className="bg-gray-900/40 rounded-[4rem] p-12 border border-white/5 space-y-8 flex flex-col justify-between">
+                       <div>
+                          <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Tarot Uživo 🃏</h3>
+                          <p className="text-[11px] font-medium text-gray-500 leading-relaxed mb-10 italic">"Gledate svako otvaranje uživo. Razgovaramo o vašim brigama i tražimo rešenja u kartama."</p>
+                          
+                          <div className="flex gap-4 p-2 bg-black/40 rounded-[2rem] border border-white/5 mb-10">
+                             {[20, 30, 45].map(d => (
+                               <button 
+                                 key={d} 
+                                 onClick={() => setTarotDuration(d as any)} 
+                                 className={`flex-1 py-4 rounded-2xl text-[10px] font-black transition-all ${tarotDuration === d ? 'bg-white text-black shadow-xl' : 'text-gray-500 hover:text-white'}`}
+                               >
+                                 {d} MIN
+                               </button>
+                             ))}
+                          </div>
                        </div>
                        
-                       <div className="grid grid-cols-1 gap-4 pt-4 border-t border-white/5">
-                          {privateProducts.filter(p => p.id !== 'p-tarot-session').map(product => (
-                            <div key={product.id} className="flex items-center justify-between p-6 bg-white/5 rounded-3xl hover:bg-white/10 transition-all border border-white/5">
-                               <div className="flex flex-col">
-                                  <span className="text-xs font-black uppercase tracking-tight">{product.name}</span>
-                                  <span className="text-[14px] font-black text-indigo-400">€{product.price}</span>
-                               </div>
-                               <button onClick={() => handleAction(product)} className="bg-white text-black px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl">Kupi</button>
-                            </div>
-                          ))}
+                       <div className="flex items-center justify-between pt-8 border-t border-white/5">
+                          <div className="text-4xl font-black text-white tracking-tighter">€{tarotPrices[tarotDuration as keyof typeof tarotPrices]}</div>
+                          <button 
+                            onClick={() => handleBooking({id: 'p-tarot-session', name: 'Tarot Tumačenje Uživo'}, tarotPrices[tarotDuration as keyof typeof tarotPrices])}
+                            className="bg-indigo-600 text-white px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20"
+                          >
+                            Zakaži Odmah
+                          </button>
+                       </div>
+                    </div>
+
+                    {/* Natal/Synastry Section */}
+                    <div className="bg-gray-900/40 rounded-[4rem] p-12 border border-white/5 space-y-10">
+                       <h3 className="text-3xl font-black uppercase tracking-tighter">Astro Konsultacije ✨</h3>
+                       
+                       <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                             <input type="text" placeholder="Ime i Prezime" value={natalForm.name} onChange={e => setNatalForm({...natalForm, name: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all" />
+                             <input type="text" placeholder="Datum rođenja" value={natalForm.birthDate} onChange={e => setNatalForm({...natalForm, birthDate: e.target.value})} className="bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all" />
+                             <input type="text" placeholder="Tačno vreme rođenja" value={natalForm.birthTime} onChange={e => setNatalForm({...natalForm, birthTime: e.target.value})} className="bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all" />
+                             <input type="text" placeholder="Mesto rođenja" value={natalForm.birthPlace} onChange={e => setNatalForm({...natalForm, birthPlace: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all" />
+                             <input type="text" placeholder="Gde ste proveli zadnji rođendan?" value={natalForm.birthdayLocation} onChange={e => setNatalForm({...natalForm, birthdayLocation: e.target.value})} className="col-span-2 bg-black/20 border border-white/5 px-6 py-4 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all" />
+                          </div>
+                          <div className="pt-6 grid grid-cols-1 gap-4">
+                             {consultations.map(p => (
+                               <button 
+                                 key={p.id}
+                                 onClick={() => handleBooking(p)}
+                                 className="w-full flex justify-between items-center bg-white/5 border border-white/5 p-6 rounded-3xl hover:bg-white/10 transition-all group"
+                               >
+                                  <div className="text-left">
+                                     <div className="text-[10px] font-black uppercase text-gray-300 tracking-tight group-hover:text-white">{p.name}</div>
+                                     <div className="text-[14px] font-black text-indigo-400 group-hover:text-indigo-300">€{p.price}</div>
+                                  </div>
+                                  <div className="bg-white text-black px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest">Kupi</div>
+                               </button>
+                             ))}
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Audio Response Section */}
+                    <div className="bg-gray-950/40 rounded-[4rem] p-12 border border-white/5 lg:col-span-2 space-y-8">
+                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                          <div className="flex-1">
+                             <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">Audio Odgovor 🎙️</h3>
+                             <p className="text-[11px] font-medium text-gray-500 leading-relaxed italic mb-8">
+                               "Brza opcija za konkretna pitanja. Dobijate snimljen audio odgovor direktno u bakšis.net inbox."
+                             </p>
+                             <textarea 
+                               placeholder="Upišite vaše pitanje ovde (npr. 'Da li je on prava osoba za mene?') + jedno gratis pitanje..."
+                               value={audioQuestion}
+                               onChange={e => setAudioQuestion(e.target.value)}
+                               className="w-full bg-black/20 border border-white/5 px-8 py-6 rounded-[2rem] text-sm outline-none focus:border-indigo-500 h-32 resize-none"
+                             />
+                          </div>
+                          <div className="w-full md:w-80 bg-white/5 p-10 rounded-[3rem] border border-white/5 flex flex-col justify-center text-center">
+                             <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2">Cena Usluge</div>
+                             <div className="text-5xl font-black text-white tracking-tighter mb-8">€{audioResp?.price}</div>
+                             <button 
+                              onClick={() => handleBooking(audioResp)}
+                              className="w-full bg-white text-black py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl"
+                             >
+                               Pošalji Pitanje
+                             </button>
+                          </div>
                        </div>
                     </div>
                  </div>
@@ -273,8 +353,8 @@ export const Profile: React.FC = () => {
         </div>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes slow-zoom { from { transform: scale(1); } to { transform: scale(1.15); } }
-        .animate-slow-zoom { animation: slow-zoom 25s infinite alternate ease-in-out; }
+        @keyframes slow-zoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+        .animate-slow-zoom { animation: slow-zoom 20s infinite alternate ease-in-out; }
       `}} />
     </div>
   );

@@ -16,7 +16,8 @@ export const syncYouTubeChannel = async (handle: string) => {
       5. Kratak opis kanala.
       6. Glavne boje brenda (hex kodovi).`,
       config: {
-        tools: [{ googleSearch: {} }],
+        // Guideline: If googleSearch is used, the response.text may not be in JSON format.
+        // Since we need to parse JSON, we avoid using googleSearch here to ensure format consistency.
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -54,6 +55,7 @@ export const syncYouTubeChannel = async (handle: string) => {
       }
     });
 
+    // Guideline: Access the .text property directly, do not call it as a method.
     return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("YouTube Sync Error:", error);
@@ -110,6 +112,7 @@ export const analyzeVideoForSocials = async (videoUrl: string, creatorContext: s
       }
     });
 
+    // Guideline: Access the .text property directly.
     const text = response.text || '{"suggestions":[]}';
     const parsed = JSON.parse(text);
     
