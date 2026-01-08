@@ -72,36 +72,44 @@ export const EXALTED_VENUS: User = {
 
 export const EXALTED_VENUS_PRODUCTS: DigitalProduct[] = [
   { 
-    id: 'v-extended-1', 
-    name: 'LJUBAVNI ŽIVOT: Duboka Analiza', 
-    description: 'PRODUŽENI VIDEO + 30 dana Early Bird statusa. Analiza namera vaše osobe koju ne smem na YT.', 
-    price: 9.99, 
-    type: 'EXTENDED_VIDEO', 
-    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=800&q=80' 
-  },
-  { 
-    id: 'v-extended-2', 
-    name: 'FINANSIJE: Godišnji Plan', 
-    description: 'PRODUŽENI VIDEO + 30 dana Early Bird statusa. Fokus na investicije i promenu karijere.', 
-    price: 9.99, 
-    type: 'EXTENDED_VIDEO', 
-    imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80' 
-  },
-  { 
     id: 'p-natal-annual', 
-    name: 'Natalna Karta (Full Paket)', 
-    description: '45 min WhatsApp video poziv + PDF izveštaj. Sveobuhvatna analiza sudbine.', 
+    name: 'Natalna Karta + Godišnji Horoskop', 
+    description: 'Kompletno tumačenje životnog horoskopa + prognoza za 12 meseci. Trajanje: 45 min.', 
     price: 120.00, 
     type: 'CONSULTATION', 
     imageUrl: 'https://images.unsplash.com/photo-1515940175183-6798529cb860?w=400&q=80' 
   },
   { 
+    id: 'p-synastry', 
+    name: 'Uporedni Horoskop (Sinastrija)', 
+    description: 'Analiza odnosa dve osobe. Detaljni aspekti privlačnosti i izazova.', 
+    price: 130.00, 
+    type: 'CONSULTATION', 
+    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=400&q=80' 
+  },
+  { 
     id: 'p-tarot-session', 
     name: 'Tarot Tumačenje Uživo', 
-    description: 'Video poziv uživo. Gledate svako otvaranje karata i dobijate odgovore odmah.', 
+    description: 'Gledate svako otvaranje karata i razgovaramo uživo putem video poziva.', 
     price: 65.00, 
     type: 'TAROT_READING', 
     imageUrl: 'https://images.unsplash.com/photo-1576669801775-ffed63192b48?w=400&q=80' 
+  },
+  { 
+    id: 'p-audio-response', 
+    name: 'Audio Odgovor na Pitanje', 
+    description: 'Snimljen audio odgovor na jedno konkretno pitanje + jedno gratis pitanje.', 
+    price: 55.00, 
+    type: 'FILE_DOWNLOAD', 
+    imageUrl: 'https://images.unsplash.com/photo-1583484963886-cccc2bf51944?w=400&q=80' 
+  },
+  { 
+    id: 'v-extended-1', 
+    name: 'LJUBAVNI ŽIVOT: Duboka Analiza (Video)', 
+    description: 'PRODUŽENI VIDEO + 30 dana Early Bird statusa. Namere vaše osobe.', 
+    price: 9.99, 
+    type: 'EXTENDED_VIDEO', 
+    imageUrl: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=800&q=80' 
   },
 ];
 
@@ -111,11 +119,8 @@ export const ALL_USERS = [EXALTED_VENUS, ...MOCK_FOLLOWERS];
 export const MOCK_CREATORS = [EXALTED_VENUS];
 export const CATEGORIES = [{ id: 'astro', name: 'Astrologija & Tarot', icon: '🔮' }];
 
-// MOCK TRANSACTIONS for Admin Dashboard
 export const MOCK_TRANSACTIONS = [
   { id: 'tx-1', amount: 120.00, fee: 6.00, creator: 'exalted-venus', date: '2024-05-20' },
   { id: 'tx-2', amount: 45.00, fee: 2.25, creator: 'exalted-venus', date: '2024-05-21' },
   { id: 'tx-3', amount: 9.99, fee: 0.50, creator: 'exalted-venus', date: '2024-05-21' },
-  { id: 'tx-4', amount: 65.00, fee: 3.25, creator: 'exalted-venus', date: '2024-05-22' },
-  { id: 'tx-5', amount: 19.99, fee: 1.00, creator: 'exalted-venus', date: '2024-05-23' }
 ];
