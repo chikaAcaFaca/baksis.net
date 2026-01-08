@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { slugify } from '../constants';
+import { EXALTED_VENUS } from '../constants';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,126 +11,122 @@ interface AuthModalProps {
 
 export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>('REGISTER');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [role, setRole] = useState<'CREATOR' | 'FOLLOWER'>('FOLLOWER');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   if (!isOpen) return null;
 
-  // Fix: Explicitly using React.FormEvent from the React namespace
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleAuth = () => {
     setIsLoading(true);
-    setError(null);
-
-    // Simulacija uspeha za demo režim ako Supabase nije dostupan
-    const enterDemoMode = () => {
-      onSuccess({ email, phone, role });
-      onClose();
-      if (role === 'CREATOR') navigate('/studio');
-    };
-
-    try {
-      if (mode === 'REGISTER') {
-        const username = slugify(email.split('@')[0]) + '_' + Math.random().toString(36).slice(2, 5);
-        
-        const { error: authError } = await supabase.auth.signUp({
-          email,
-          password: 'BaksisUser123!',
-          options: { data: { username, role, phone_number: phone } }
-        });
-
-        if (authError) throw authError;
-      } else {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password: 'BaksisUser123!',
-        });
-        if (authError) throw authError;
-      }
+    // Simulacija zvaničnog Google OAuth flow-a
+    setTimeout(() => {
+      const userData = {
+        email: role === 'CREATOR' ? 'jecaman86@gmail.com' : 'korisnik@gmail.com',
+        displayName: role === 'CREATOR' ? 'Exalted Venus Tarot' : 'Marko J.',
+        role: role,
+        googleId: 'google_12345'
+      };
       
-      enterDemoMode();
-    } catch (err: any) {
-      console.warn("Auth status: Ulazak u Demo režim zbog nedostajuće konfiguracije.");
-      // Ako Supabase nije podešen, ipak puštamo korisnika unutra radi testiranja UI-a
-      enterDemoMode();
-    } finally {
+      localStorage.setItem('baksis_logged_in', 'true');
+      localStorage.setItem('baksis_user_role', role);
+      localStorage.setItem('baksis_user_data', JSON.stringify(userData));
+      
       setIsLoading(false);
-    }
+      onSuccess(userData);
+      onClose();
+      
+      if (role === 'CREATOR') {
+        navigate('/studio');
+      } else {
+        navigate('/');
+      }
+    }, 1500);
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-lg">
-      <div className="bg-white rounded-[3rem] w-full max-w-md p-10 md:p-14 shadow-2xl border border-gray-100 relative">
-        <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-950 text-xl font-bold">✕</button>
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-gray-950/90 backdrop-blur-xl">
+      <div className="bg-white rounded-[3.5rem] w-full max-w-md p-12 shadow-2xl border border-white/10 relative overflow-hidden">
+        {/* Dekorativni elementi */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        
+        <button onClick={onClose} className="absolute top-8 right-8 text-gray-300 hover:text-gray-950 transition-colors">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
 
-        <div className="text-center mb-10">
+        <div className="text-center mb-12 relative z-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-2">
             {mode === 'REGISTER' ? 'Pridruži se' : 'Dobrodošli nazad'}
           </h2>
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-            {mode === 'REGISTER' ? 'Izaberi ulogu i zadrži 95% zarade' : 'Prijavi se na svoj nalog'}
+            {role === 'CREATOR' ? 'Poveži svoj YT Studio i počni sa zaradom' : 'Podrži omiljene kreatore na Balkanu'}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-6">
+        <div className="space-y-8 relative z-10">
           {mode === 'REGISTER' && (
-            <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100 mb-8">
+            <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
               <button
-                type="button"
                 onClick={() => setRole('FOLLOWER')}
-                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'FOLLOWER' ? 'bg-white text-indigo-600 shadow-sm border border-gray-100' : 'text-gray-400'}`}
+                className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'FOLLOWER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >Pratilac</button>
               <button
-                type="button"
                 onClick={() => setRole('CREATOR')}
-                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'CREATOR' ? 'bg-white text-indigo-600 shadow-sm border border-gray-100' : 'text-gray-400'}`}
+                className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'CREATOR' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >Kreator</button>
             </div>
           )}
 
           <div className="space-y-4">
+            <button
+              onClick={handleGoogleAuth}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-4 bg-white border-2 border-gray-100 text-gray-900 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:border-indigo-600 transition-all shadow-sm group"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_HiRes_Logo.png" className="w-5 h-5 object-contain" alt="" />
+                  <span>Nastavi putem Google-a</span>
+                </>
+              )}
+            </button>
+            
+            <div className="flex items-center gap-4 py-2">
+              <div className="h-px flex-1 bg-gray-100"></div>
+              <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">ili emailom</span>
+              <div className="h-px flex-1 bg-gray-100"></div>
+            </div>
+
             <input
-              required
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email adresa"
-              className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl px-6 py-4 text-sm font-bold outline-none text-gray-900"
+              className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl px-6 py-4 text-sm font-bold outline-none text-gray-900 transition-all"
             />
-            {mode === 'REGISTER' && (
-              <input
-                required
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Broj telefona"
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-600 rounded-2xl px-6 py-4 text-sm font-bold outline-none text-gray-900"
-              />
-            )}
           </div>
 
           <button
             disabled={isLoading}
-            type="submit"
-            className="w-full bg-gray-950 text-white py-5 rounded-[1.75rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-indigo-600 transition-all disabled:opacity-50"
+            className="w-full bg-gray-950 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-indigo-600 transition-all disabled:opacity-50"
           >
-            {isLoading ? 'Obrada...' : mode === 'REGISTER' ? 'Pokreni Avanturu' : 'Prijavi se'}
+            {mode === 'REGISTER' ? 'Registruj se' : 'Prijavi se'}
           </button>
 
-          <div className="text-center">
+          <div className="text-center pt-4">
             <button 
-              type="button"
               onClick={() => setMode(mode === 'REGISTER' ? 'LOGIN' : 'REGISTER')}
-              className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:underline"
+              className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 transition-colors"
             >
-              {mode === 'REGISTER' ? 'Već imaš nalog? Prijavi se' : 'Nemaš nalog? Registruj se'}
+              {mode === 'REGISTER' ? 'Već imaš nalog? Prijavi se' : 'Nemaš nalog? Kreiraj profil'}
             </button>
           </div>
-        </form>
+        </div>
+        
+        <div className="mt-12 text-center text-[8px] font-bold text-gray-300 uppercase tracking-widest leading-relaxed px-4">
+          Prijavom na Bakšis.net prihvatate uslove korišćenja i omogućavate pristup YouTube i Calendar podacima ukoliko ste kreator.
+        </div>
       </div>
     </div>
   );
