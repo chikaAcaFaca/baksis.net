@@ -16,14 +16,17 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    try {
-      // Definišemo dozvole koje su nam potrebne od Google-a
-      // Za kreatore tražimo pristup YouTube-u i Kalendaru
-      const scopes = role === 'CREATOR' 
-        ? 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.events.readonly' 
-        : 'email profile';
+    
+    // Koristimo standardnije verzije scope-ova koje su lakše za pronalaženje u listi
+    const scopes = role === 'CREATOR' 
+      ? 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly' 
+      : 'openid email profile';
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+    try {
+      // Čuvamo ulogu u localStorage pre nego što nas Google redirektuje
+      localStorage.setItem('baksis_user_role', role);
+
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           queryParams: {
@@ -31,17 +34,20 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             prompt: 'consent',
           },
           scopes: scopes,
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + '/studio'
         }
       });
 
-      if (error) throw error;
-      
-      // Napomena: Supabase će redirektovati korisnika na Google.
-      // Nakon povratka, sesija će biti automatski uhvaćena u Layout.tsx
+      if (error) {
+        if (error.message.includes("provider is not enabled")) {
+          alert("Greška: Google Auth nije omogućen u Supabase dashboard-u (Authentication -> Providers).");
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
-      console.error('Greška pri prijavi:', error.message);
-      alert('Došlo je do greške pri povezivanju sa Google-om.');
+      console.error('OAuth Error:', error.message);
+      alert(`Greška pri prijavi: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +65,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
         <div className="text-center mb-10 relative z-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-2">Prijavi se</h2>
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-            Pristupi bakšis.net platformi putem svog Google naloga
+            Odaberi svoju ulogu na bakšis.net
           </p>
         </div>
 
@@ -75,32 +81,32 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             >Kreator</button>
           </div>
 
-          <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
-            <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest leading-relaxed text-center">
-              {role === 'CREATOR' 
-                ? "💡 KREATOR MODE: Prijavom ćete povezati svoj YouTube kanal i Google kalendar direktno sa bakšis.net profilom." 
-                : "Uživaj u ekskluzivnom sadržaju i podrži omiljene kreatore direktno."}
-            </p>
+          <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+             <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-relaxed text-center">
+               {role === 'CREATOR' 
+                ? "🚀 KAO KREATOR: Povezaćemo tvoj YouTube kanal i kalendar kako bi automatizovali prodaju i zakazivanje." 
+                : "Uživaj u sadržaju i podrži omiljene kreatore direktno bez velikih provizija."}
+             </p>
           </div>
 
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-4 bg-gray-900 text-white py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl group disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-4 bg-gray-900 text-white py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl disabled:opacity-50"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_HiRes_Logo.png" className="w-5 h-5 object-contain invert" alt="" />
-                <span>Nastavi sa Google nalogom</span>
+                <span>Poveži se sa Google-om</span>
               </>
             )}
           </button>
         </div>
         
         <div className="mt-12 text-center text-[8px] font-bold text-gray-300 uppercase tracking-widest leading-relaxed">
-          Zvanična Google OAuth integracija. Vaši podaci su sigurni i procesuirani u skladu sa Google API pravilima.
+          Google OAuth 2.0 integracija. Vaši podaci su sigurni.
         </div>
       </div>
     </div>
