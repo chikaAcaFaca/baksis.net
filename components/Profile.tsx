@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { useParams } = ReactRouterDOM as any;
+
 import { 
   EXALTED_VENUS, MOCK_FOLLOWER, EXALTED_VENUS_PRODUCTS, DEFAULT_TIERS
 } from '../constants';

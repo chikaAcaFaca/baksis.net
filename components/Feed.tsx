@@ -1,6 +1,9 @@
 
 import { EXALTED_VENUS, APP_FEE_PERCENTAGE } from '../constants';
-import { Link } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { Link } = ReactRouterDOM as any;
+
 import React, { useEffect, useState } from 'react';
 
 export const Feed: React.FC = () => {

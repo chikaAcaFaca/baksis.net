@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { MOCK_CREATORS } from '../constants';
-import { Link } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { Link } = ReactRouterDOM as any;
 
 export const Search: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');

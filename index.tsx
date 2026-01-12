@@ -1,7 +1,10 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors in this environment
+import * as ReactRouterDOM from 'react-router-dom';
+const { BrowserRouter, Routes, Route, Navigate } = ReactRouterDOM as any;
+
 import { Layout } from './components/Layout';
 import { Profile } from './components/Profile';
 import { AIHost } from './components/AIHost';

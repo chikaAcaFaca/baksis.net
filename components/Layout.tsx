@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation, Link } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { NavLink, useLocation, Link } = ReactRouterDOM as any;
+
 import { AuthModal } from './AuthModal';
 import { MOCK_FOLLOWER, EXALTED_VENUS } from '../constants';
 import { supabase } from '../supabaseClient';

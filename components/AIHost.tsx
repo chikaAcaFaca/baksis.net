@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+// Fix: Use namespace import for react-router-dom to resolve missing exported member errors
+import * as ReactRouterDOM from 'react-router-dom';
+const { useLocation } = ReactRouterDOM as any;
+
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
 // Ručna implementacija dekodiranja base64 stringa u Uint8Array.
