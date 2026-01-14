@@ -3,32 +3,30 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-  // loadEnv učitava iz .env i iz sistemskog environment-a (Vercel)
   const env = loadEnv(mode, (process as any).cwd(), '');
   
-  // Određujemo finalne vrednosti, dajući prednost VITE_ prefiksu ali dopuštajući i obične nazive
-  const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL || '';
-  const supabaseKey = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '';
-  const apiKey = env.API_KEY || env.VITE_API_KEY || '';
+  const getVar = (key: string) => env[key] || (process.env as any)[key] || '';
+
+  // Pokušavamo da nađemo Supabase URL i Key bez obzira na prefiks
+  const supabaseUrl = getVar('VITE_SUPABASE_URL') || getVar('NEXT_PUBLIC_SUPABASE_URL') || getVar('SUPABASE_URL');
+  const supabaseKey = getVar('VITE_SUPABASE_ANON_KEY') || getVar('NEXT_PUBLIC_SUPABASE_ANON_KEY') || getVar('SUPABASE_ANON_KEY');
+  const apiKey = getVar('API_KEY');
+
+  console.log(`[Build] Provera okruženja: URL=${supabaseUrl ? 'OK' : 'NEDOSTAJE'}`);
 
   return {
     plugins: [react()],
     define: {
-      // Direktna zamena za klijentski kod. 
-      // Ovo pretvara npr. import.meta.env.VITE_SUPABASE_URL u "https://vaš-url.supabase.co" u finalnom fajlu.
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseKey),
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
-      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseKey),
-      'process.env.API_KEY': JSON.stringify(apiKey),
+      // Koristimo JSON.stringify samo ako vrednost postoji, inače 'null'
+      'import.meta.env.VITE_SUPABASE_URL': supabaseUrl ? JSON.stringify(supabaseUrl) : 'null',
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': supabaseKey ? JSON.stringify(supabaseKey) : 'null',
+      'process.env.VITE_SUPABASE_URL': supabaseUrl ? JSON.stringify(supabaseUrl) : 'null',
+      'process.env.VITE_SUPABASE_ANON_KEY': supabaseKey ? JSON.stringify(supabaseKey) : 'null',
+      'process.env.API_KEY': apiKey ? JSON.stringify(apiKey) : 'null',
     },
     build: {
       outDir: 'dist',
-      sourcemap: true,
-      chunkSizeWarningLimit: 1000,
-    },
-    server: {
-      port: 3000
+      sourcemap: false
     }
   };
 });

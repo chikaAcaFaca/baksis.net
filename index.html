@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script>
-        // Polyfill for process.env used by some libraries and our fallback logic
+        // Minimalni polyfill bez dodeljivanja lažnih vrednosti
         window.process = window.process || { env: {} };
     </script>
     <style>
@@ -28,7 +28,6 @@
           background: #4f46e5;
           color: white;
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 10px; }

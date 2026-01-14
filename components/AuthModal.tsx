@@ -19,35 +19,32 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
     setIsLoading(true);
     setErrorMessage(null);
     
-    // Definišemo dozvole (scopes)
-    const creatorScopes = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
-    const followerScopes = 'openid email profile';
-    const selectedScopes = role === 'CREATOR' ? creatorScopes : followerScopes;
+    // Čuvamo ulogu lokalno pre nego što odemo na Google
+    localStorage.setItem('baksis_user_role', role);
 
     try {
-      localStorage.setItem('baksis_user_role', role);
+      const currentOrigin = window.location.origin;
+      const redirectTo = `${currentOrigin}/studio`;
+      
+      console.log("🚀 Pokretanje Google prijave...");
+      console.log("📍 Redirect URL koji šaljemo:", redirectTo);
+      console.info("💡 Napomena: Ovaj URL mora biti u 'Redirect URLs' listi u Supabase Auth postavkama.");
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          scopes: selectedScopes,
+          redirectTo: redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          },
-          redirectTo: window.location.origin + '/studio'
+          }
         }
       });
 
       if (error) throw error;
     } catch (error: any) {
-      console.error('OAuth Error:', error.message);
-      if (error.message.includes('provider is not enabled')) {
-        setErrorMessage('Greška: Google prijava nije omogućena u Supabase Dashboard-u. Potrebno je aktivirati Google provider pod Authentication -> Providers.');
-      } else {
-        setErrorMessage(`Greška: ${error.message}`);
-      }
-    } finally {
+      console.error('Google Auth Error:', error.message);
+      setErrorMessage(`Greška: ${error.message}. Proverite konzolu browsera za detalje.`);
       setIsLoading(false);
     }
   };
@@ -61,7 +58,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
 
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-2">Prijavi se</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Izaberi svoju ulogu</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Poveži svoj Google nalog</p>
         </div>
 
         <div className="space-y-8">
@@ -84,17 +81,23 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
             </div>
           )}
 
+          <div className="bg-emerald-50/50 border border-emerald-100 p-6 rounded-2xl mb-4">
+             <p className="text-[9px] font-black uppercase text-emerald-700 leading-tight">
+               💡 VAŽNO: Bićete preusmereni na Google. Ako ste Kreator, odobrite YouTube i Calendar dozvole.
+             </p>
+          </div>
+
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className={`w-full flex items-center justify-center gap-4 py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl ${role === 'CREATOR' ? 'bg-indigo-600 text-white' : 'bg-gray-900 text-white'}`}
+            className={`w-full flex items-center justify-center gap-4 py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl ${role === 'CREATOR' ? 'bg-indigo-600 text-white' : 'bg-gray-950 text-white'}`}
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_HiRes_Logo.png" className="w-5 h-5 object-contain invert" alt="" />
-                <span>Prijavi se kao {role === 'CREATOR' ? 'Kreator' : 'Pratilac'}</span>
+                <span>Nastavi kao {role === 'CREATOR' ? 'Kreator' : 'Pratilac'}</span>
               </>
             )}
           </button>
