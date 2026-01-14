@@ -11,11 +11,13 @@ interface AuthModalProps {
 export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
   const [role, setRole] = useState<'CREATOR' | 'FOLLOWER'>('FOLLOWER');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     
     // Definišemo dozvole (scopes)
     const creatorScopes = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
@@ -28,7 +30,6 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Napomena: scopes se šalje kao string odvojen razmacima
           scopes: selectedScopes,
           queryParams: {
             access_type: 'offline',
@@ -41,7 +42,11 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
       if (error) throw error;
     } catch (error: any) {
       console.error('OAuth Error:', error.message);
-      alert(`Greška: ${error.message}`);
+      if (error.message.includes('provider is not enabled')) {
+        setErrorMessage('Greška: Google prijava nije omogućena u Supabase Dashboard-u. Potrebno je aktivirati Google provider pod Authentication -> Providers.');
+      } else {
+        setErrorMessage(`Greška: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -62,14 +67,22 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
         <div className="space-y-8">
           <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
             <button
-              onClick={() => setRole('FOLLOWER')}
+              onClick={() => { setRole('FOLLOWER'); setErrorMessage(null); }}
               className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'FOLLOWER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >Pratilac</button>
             <button
-              onClick={() => setRole('CREATOR')}
+              onClick={() => { setRole('CREATOR'); setErrorMessage(null); }}
               className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${role === 'CREATOR' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >Kreator</button>
           </div>
+
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
+               <p className="text-[10px] font-black uppercase tracking-tight text-red-600 leading-relaxed text-center">
+                 {errorMessage}
+               </p>
+            </div>
+          )}
 
           <button
             onClick={handleGoogleLogin}

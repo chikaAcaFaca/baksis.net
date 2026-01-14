@@ -18,17 +18,22 @@ export const CreatorStudio: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
       if (session) {
         setUser(session.user);
         
-        // Provera da li korisnik ima odobrene scopes (ovo bi u realnom sistemu išlo preko backend-a)
-        // Za sada simuliramo na osnovu postojanja sesije nakon redirekcije
+        // Proveravamo ulogu koju smo sačuvali pre OAuth inicijacije
         const role = localStorage.getItem('baksis_user_role');
+        
+        // Ako je korisnik došao kao kreator, pretpostavljamo da su YT i Calendar dozvole zatražene
         if (role === 'CREATOR') {
           setIsYoutubeStudioConnected(true);
           setIsCalendarConnected(true);
         }
+      } else if (!error) {
+        // Ako nema sesije, a nema ni greške, možemo opciono preusmeriti korisnika
+        console.log("No session found in Studio.");
       }
     };
     checkAuth();
