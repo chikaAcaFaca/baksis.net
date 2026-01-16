@@ -19,16 +19,24 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
     setIsLoading(true);
     setErrorMessage(null);
     
-    // Čuvamo ulogu lokalno pre nego što odemo na Google
+    // Čuvamo ulogu lokalno
     localStorage.setItem('baksis_user_role', role);
 
     try {
-      const currentOrigin = window.location.origin;
+      // Dobijamo trenutni origin (npr. https://baksis-net.vercel.app)
+      let currentOrigin = window.location.origin;
+      
+      // FIX: Ako smo na localhostu ili čudnom okruženju, osiguravamo da imamo pun protokol
+      if (!currentOrigin.startsWith('http')) {
+        currentOrigin = `https://${currentOrigin}`;
+      }
+
+      // Supabase zahteva puni, apsolutni URL koji je na beloj listi u Dashboard-u
       const redirectTo = `${currentOrigin}/studio`;
       
-      console.log("🚀 Pokretanje Google prijave...");
-      console.log("📍 Redirect URL koji šaljemo:", redirectTo);
-      console.info("💡 Napomena: Ovaj URL mora biti u 'Redirect URLs' listi u Supabase Auth postavkama.");
+      console.log("🚀 Auth Inicijalizacija...");
+      console.log("📍 Site Origin:", currentOrigin);
+      console.log("🔄 Redirecting to (must be in Supabase whitelist):", redirectTo);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -42,9 +50,18 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
       });
 
       if (error) throw error;
+      
     } catch (error: any) {
-      console.error('Google Auth Error:', error.message);
-      setErrorMessage(`Greška: ${error.message}. Proverite konzolu browsera za detalje.`);
+      console.error('Auth Error Details:', error);
+      
+      let friendlyMessage = error.message;
+      if (error.message.includes('redirect_uri_mismatch')) {
+        friendlyMessage = "Greška u Google Konzoli: Dodaj callback URL u 'Authorized Redirect URIs'.";
+      } else if (error.message.includes('invalid_request')) {
+        friendlyMessage = "Putanja nije validna. Proveri 'Site URL' u Supabase Auth podešavanjima.";
+      }
+
+      setErrorMessage(friendlyMessage);
       setIsLoading(false);
     }
   };
@@ -58,7 +75,7 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
 
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-2">Prijavi se</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Poveži svoj Google nalog</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Izaberi svoj put do zarade</p>
         </div>
 
         <div className="space-y-8">
@@ -74,35 +91,52 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
           </div>
 
           {errorMessage && (
-            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
-               <p className="text-[10px] font-black uppercase tracking-tight text-red-600 leading-relaxed text-center">
+            <div className="bg-red-50 border-2 border-red-200 p-6 rounded-3xl animate-shake">
+               <div className="flex gap-3 mb-2">
+                 <span className="text-xl">⚠️</span>
+                 <p className="text-[11px] font-black uppercase text-red-700">Auth Konfiguracija</p>
+               </div>
+               <p className="text-[10px] font-bold text-red-600 leading-relaxed italic">
                  {errorMessage}
+               </p>
+               <p className="text-[8px] mt-4 font-black text-gray-400 uppercase">Proveri Site URL u Supabase Dashboardu!</p>
+            </div>
+          )}
+
+          {!errorMessage && (
+            <div className="bg-indigo-50/50 border border-indigo-100 p-6 rounded-2xl mb-4">
+               <p className="text-[9px] font-black uppercase text-indigo-700 leading-tight">
+                 {role === 'CREATOR' 
+                   ? '🚀 KAO KREATOR: Dobijaš pristup Studiju, AI klipovima i direktnim isplatama na Payoneer.' 
+                   : '💖 KAO PRATILAC: Možeš podržati omiljene kreatore i otključati ekskluzivni sadržaj.'}
                </p>
             </div>
           )}
 
-          <div className="bg-emerald-50/50 border border-emerald-100 p-6 rounded-2xl mb-4">
-             <p className="text-[9px] font-black uppercase text-emerald-700 leading-tight">
-               💡 VAŽNO: Bićete preusmereni na Google. Ako ste Kreator, odobrite YouTube i Calendar dozvole.
-             </p>
-          </div>
-
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className={`w-full flex items-center justify-center gap-4 py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl ${role === 'CREATOR' ? 'bg-indigo-600 text-white' : 'bg-gray-950 text-white'}`}
+            className={`w-full flex items-center justify-center gap-4 py-6 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl ${role === 'CREATOR' ? 'bg-indigo-600 text-white' : 'bg-gray-950 text-white hover:bg-indigo-600 active:scale-95 disabled:opacity-50'}`}
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_HiRes_Logo.png" className="w-5 h-5 object-contain invert" alt="" />
-                <span>Nastavi kao {role === 'CREATOR' ? 'Kreator' : 'Pratilac'}</span>
+                <span>Nastavi sa Google-om</span>
               </>
             )}
           </button>
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+      `}} />
     </div>
   );
 };

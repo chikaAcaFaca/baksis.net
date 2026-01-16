@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
  */
 const isValidUrl = (url: string): boolean => {
   try {
-    return url.startsWith('http://') || url.startsWith('https://');
+    return url && (url.startsWith('http://') || url.startsWith('https://'));
   } catch {
     return false;
   }
@@ -53,17 +53,17 @@ const getSafeEnvVar = (name: string): string => {
 const rawUrl = getSafeEnvVar('VITE_SUPABASE_URL');
 const rawKey = getSafeEnvVar('VITE_SUPABASE_ANON_KEY');
 
-// Ako URL nije validan, koristimo direktan fallback na tvoj ID projekta iz logova
+// Ako URL nije validan, koristimo direktan fallback na tvoj ID projekta
 const FINAL_URL = isValidUrl(rawUrl) ? rawUrl : 'https://kxqwilvhayavadaolbde.supabase.co';
-const FINAL_KEY = (rawKey && rawKey.length > 20) ? rawKey : ''; // Ključ ostavljamo prazan ako je sumnjiv da bi bacio jasniji error kasnije
+const FINAL_KEY = (rawKey && rawKey.length > 20) ? rawKey : ''; 
 
 if (!isValidUrl(rawUrl)) {
-  console.warn("⚠️ BAKŠIS: VITE_SUPABASE_URL nije validan ili nedostaje. Koristim fallback URL.");
+  console.warn("⚠️ BAKŠIS: VITE_SUPABASE_URL nedostaje. Koristim fallback URL.");
 }
 
 export const supabase = createClient(
   FINAL_URL,
-  FINAL_KEY || 'missing-key', 
+  FINAL_KEY || 'no-key-provided', 
   {
     auth: {
       autoRefreshToken: true,
